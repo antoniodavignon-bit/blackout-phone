@@ -4,6 +4,38 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-08 — The SD card is writable, and that changes the storage plan
+
+[ADR-003](decisions/ADR-003-storage-split.md) was written from the documented Termux limitation: `termux-setup-storage` never requests SD-specific permission, so writes to the card fail. **On this device that is not true**, and measuring it beat assuming it.
+
+```
+$ readlink -f ~/storage/external-1
+/storage/0CEC-1F1B/Android/data/com.termux/files
+
+$ echo "termux wrote this" > /storage/0CEC-1F1B/Reference/tw.txt && cat …
+termux wrote this
+
+$ dd if=/dev/zero of=/storage/0CEC-1F1B/Reference/big.bin bs=1M count=200
+209715200 bytes (210 MB, 200 MiB) copied, 10.7732 s, 19.5 MB/s
+
+$ chmod +x …/t.sh && …/t.sh
+bash: …/t.sh: /data/data/com.termux/files/usr/bin/bash: bad interpreter: Permission denied
+```
+
+Both things are true at once. `~/storage/external-1` really does point at the app-scoped sandbox — but the direct `/storage/0CEC-1F1B/…` path is writable anyway. The card's directories are `drwxrwx--- root everybody`, and Termux's uid is in `everybody`, so group write applies. A `touch` alone would not have proved this; writing real bytes and reading them back did.
+
+**The real constraint turned out to be a different one.** The card is mounted `noexec`. `chmod +x` does not stick and the interpreter is refused outright. So the dividing line is not writable vs. read-only — it is **executable vs. data**.
+
+Revised: the llama.cpp build and every binary stay on internal storage. Models are pure data and can move to the card, freeing ~500 MB each and allowing several to sit side by side instead of swapping. ADR-003 amended rather than rewritten — the original reasoning and why it was wrong are both worth keeping.
+
+Sustained write measured at **19.5 MB/s**, which is fine for bulk content and slow enough that the Mac stays the right place to download.
+
+Left open: whether `llama-cli` can `mmap` a GGUF from a `noexec` mount. Read-only mapping should not trip a restriction that only blocks `PROT_EXEC`, but that is reasoning, not measurement. Phase 03 settles it.
+
+**Also this session:** every Termux mirror failed at once (25 hosts, four continents) — which is never a mirror problem. The phone had dropped Wi-Fi. Worth remembering that the USB cable carries adb and the SSH tunnel but gives the phone no internet of its own.
+
+---
+
 ## 2026-09-08 — Phase 02 complete: it's a Linux machine now
 
 Termux is up, the toolchain is installed, and the phone is reachable from the MacBook over SSH.
@@ -43,7 +75,7 @@ Worth doing before anything that installs at volume.
 
 **Also learned:** `pkg upgrade` stops on dpkg conffile prompts (`*** openssl.cnf (Y/I/N/O/D/Z)`) and waits indefinitely. On a screen showing three lines this is easy to mistake for a hang. Default (Enter) is correct on a fresh system.
 
-**Note for Phase 04:** `~/storage/external-1` appears in the Termux storage listing and points at the SD card. Whether it is writable is being tested — the documented behavior is read-only, but measuring beats assuming.
+**Note for Phase 04:** `~/storage/external-1` appears in the Termux storage listing and points at the SD card. Whether it is writable is being tested — the documented behavior is read-only, but measuring beats assuming. *(Answered in the entry above: it is writable, and `noexec` is the real constraint.)*
 
 ---
 

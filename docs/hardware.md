@@ -35,6 +35,10 @@ Manufacturer Bullitt Group closed January 2024. No vendor support, firmware, or 
 | Termux default mirror | `mirror.iscas.ac.cn` (China) | Observed during `pkg upgrade` |
 | adb serial | `S226001221008442` | `adb devices` |
 | SD volume ID | `0CEC-1F1B` | `adb shell ls /storage` |
+| SD sustained write | **19.5 MB/s** (200 MiB in 10.77 s) | `dd if=/dev/zero … bs=1M count=200` |
+| Termux write to card | **Full card writable**, not just app sandbox | `echo … > /storage/0CEC-1F1B/Reference/tw.txt` |
+| Card mount options | **noexec** — `chmod +x` does not stick | Script on card → `bad interpreter: Permission denied` |
+| `~/storage/external-1` resolves to | `/storage/0CEC-1F1B/Android/data/com.termux/files` | `readlink -f` |
 
 ## Unmeasured
 
@@ -42,7 +46,7 @@ Manufacturer Bullitt Group closed January 2024. No vendor support, firmware, or 
 |---|---|---|
 | llama.cpp tokens/sec | Decides whether the model is conversational or batch-only | `llama-bench` in Phase 03 |
 | USB-C OTG support | Not stated in published specs | Test with a cheap adapter |
-| Termux write access to SD | Documented as unavailable; worth confirming per-device | `touch ~/storage/external-1/…` |
+| GGUF `mmap` from a noexec mount | Decides whether models can live on the card | Load a model from the card once Phase 03 compiles |
 | Real-world battery under inference | Determines how many spares to carry | Measure during the 48-hour trial |
 
 ## Kit

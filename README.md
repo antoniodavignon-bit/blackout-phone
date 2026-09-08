@@ -53,7 +53,7 @@ The manufacturer, Bullitt Group, closed in January 2024. There is no vendor supp
         (build host, library source, sync target)
 ```
 
-**Why the split:** Termux cannot reliably write to the SD card on modern Android, so working files and the model live on internal storage while the card holds large read-only library content that Kiwix and OsmAnd open through Android's own storage APIs. See [ADR-003](docs/decisions/ADR-003-storage-split.md).
+**Why the split:** the card is mounted `noexec`, so nothing executable can run from it — the build and every binary stay on internal storage. Everything else is data and can live on the card, which measured fully writable from Termux at 19.5 MB/s. See [ADR-003](docs/decisions/ADR-003-storage-split.md).
 
 ## Status
 
@@ -82,7 +82,7 @@ Things that are true of this hardware and will not be engineered away:
 | Constraint | Cause | How the build works with it |
 |---|---|---|
 | ~1 GB usable RAM | 2 GB total, Android 11 Go | One workload at a time. Compile with `-j 2`, not `-j 4`. |
-| No SD writes from Termux | Long-standing Termux issue — `termux-setup-storage` never requests SD-specific permission | Working files internal; card is read-only library. |
+| Card is `noexec` | FAT32 carries no permission bits; `chmod +x` does not stick | Binaries and the build stay internal. Data — models included — can live on the card. |
 | No exFAT support | Device rejects exFAT cards outright | FAT32, and a hard 4 GB per-file ceiling. |
 | Full Wikipedia impossible | `wikipedia_en_all_mini` is 12 GB; split-ZIM support in Kiwix is unmaintained and unreliable | Curated sub-4 GB topic packs. |
 | Slow package installs | Termux defaults to a geographically distant mirror | `termux-change-repo` → North America. |
