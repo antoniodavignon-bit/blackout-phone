@@ -78,6 +78,22 @@ The dividing line is **executable vs. data**, not writable vs. read-only.
 
 Internal storage is 16 GB and holds a toolchain plus a build tree. Moving models to the card frees roughly 500 MB per model and allows several to sit side by side instead of swapping one in and out.
 
-### Open question
+### Confirmed 2026-09-08
 
-Whether `llama-cli` can `mmap` a GGUF from a `noexec` FAT32 mount. Read-only mapping should not trip the `noexec` restriction, which only blocks `PROT_EXEC` — but this is reasoning, not measurement. Test once Phase 03 compiles, and record the result here.
+`llama-cli` loads a GGUF directly from the card:
+
+```
+$ cp ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf /storage/0CEC-1F1B/ \
+  && llama-cli -m /storage/0CEC-1F1B/qwen2.5-0.5b-instruct-q4_k_m.gguf -c 1024 -t 4 -p "hi"
+
+model : /storage/0CEC-1F1B/qwen2.5-0.5b-instruct-q4_k_m.gguf
+ftype : Q4_K - Medium
+```
+
+Read-only `mmap` does not trip `noexec`, which only blocks `PROT_EXEC`. The
+reasoning held, and now it is measured rather than assumed.
+
+**Models live on the card.** Each one frees ~469 MiB of the 16 GB internal
+storage, and several can sit side by side instead of swapping one in and out.
+The executable/data split is the whole rule: binaries internal, everything else
+on the card.

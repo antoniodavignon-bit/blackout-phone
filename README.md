@@ -40,11 +40,11 @@ The manufacturer, Bullitt Group, closed in January 2024. There is no vendor supp
 │                                             │
 │  Internal 16 GB          microSD 128 GB     │
 │  ├── Termux rootfs       ├── Kiwix/  (ZIM)  │
-│  ├── ~/models/  (GGUF)   ├── Maps/          │
-│  ├── ~/llama.cpp/        └── Reference/     │
-│  └── shared/DMG/                            │
-│      ├── inbox/   (capture, writable)       │
-│      └── vault/   (notes, grep-searchable)  │
+│  ├── ~/llama.cpp/        ├── Maps/          │
+│  │   (binaries only)     ├── Reference/     │
+│  └── shared/DMG/         └── models/ (GGUF) │
+│      ├── inbox/                             │
+│      └── vault/                             │
 └─────────────────────────────────────────────┘
               │
               │  USB — adb + SSH over forwarded port

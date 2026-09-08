@@ -70,6 +70,45 @@ chipset spec rather than the device, and wrong for a plausible-sounding reason.
 Corrected. Almost nobody compiles llama.cpp on 32-bit ARM in 2026, so these
 paths sit unexercised upstream.
 
+### Thread count: measured, and the tidy answer was wrong
+
+Eight runs, same prompt, same 20-token cap, model on the card:
+
+| Threads | Prompt t/s | Generation t/s |
+|---|---|---|
+| 4 | 6.1 | 0.6 |
+| 4 | 5.9 | 0.6 |
+| 4 | 6.1 | 0.6 |
+| 4 | 6.2 | 0.6 |
+| 4 | 6.2 | **0.7** |
+| 2 | 3.6 | 0.7 |
+| 2 | 3.6 | 0.7 |
+| 2 | 3.6 | 0.7 |
+
+After the first `-t 2` run returned 0.7 against a `-t 4` baseline pinned at 0.6,
+the obvious conclusion was that generation is memory-bandwidth bound and fewer
+threads wins. Three confirming runs seemed to settle it.
+
+Then a fifth `-t 4` run also produced 0.7, which breaks the story. llama.cpp
+reports one decimal place, so 0.64 and 0.68 round to different displayed values
+while differing by ~6%. Two threads is modestly faster at generation; it is not
+17% faster.
+
+**Decision: `-t 4` stays the default.** The generation gain is inside rounding
+error. The prompt-processing penalty — 6.1 → 3.6, a 41% loss — is unambiguous.
+Trading a certain large loss for a marginal uncertain gain is a bad trade.
+
+The general shape still holds and is worth knowing: **prompt processing scales
+with cores (compute bound); generation barely does (memory-bandwidth bound).**
+That is why halving threads nearly halves one and hardly moves the other.
+
+### Card vs internal storage
+
+Also measured across those runs: loading the GGUF from the microSD (5.9 t/s
+prompt, 0.6 generation) versus internal storage (6.1 / 0.6). Identical within
+noise. Once `mmap` has the file mapped, where it came from stops mattering —
+so models live on the card, and internal storage keeps the binaries.
+
 ### Still open
 
 `llama-bench` was not among the built targets, so these figures come from

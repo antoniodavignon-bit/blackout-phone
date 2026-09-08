@@ -49,6 +49,13 @@ hand.
 The ADR's guidance stands, sharpened: the model is a last-resort utility for
 when there is no network, not a feature anyone should plan a workflow around.
 
+**Thread count does not rescue this.** Eight runs across `-t 4` and `-t 2`:
+generation moves between 0.6 and 0.7 regardless, while prompt processing drops
+41% at two threads (6.1 → 3.6). Prompt processing is compute bound and scales
+with cores; generation is memory-bandwidth bound and barely does. `-t 4` is the
+default because its advantage is certain and the alternative's is inside
+rounding error.
+
 ## Consequences
 
 - The model handles bounded, mechanical text work: tightening a sentence, generating variations, summarizing a paragraph.
