@@ -1,6 +1,6 @@
 # ADR-002 — Sub-1B model ceiling
 
-**Status:** Accepted · 2026-09-07
+**Status:** Accepted 2026-09-07 · **Throughput measured 2026-09-08**
 
 ## Context
 
@@ -23,9 +23,31 @@ Sizes are from the official Qwen GGUF release. The 4 GB per-file limit imposed b
 
 Context size is the second memory dial. The upstream llama.cpp Android docs suggest 4096 as a starting point on typical phones; on this device the starting point is 1024, raised only if it holds.
 
-## Open question
+## Measured 2026-09-08
 
-**Throughput is unmeasured.** No published tokens-per-second figure exists for llama.cpp on a Snapdragon 215, and none is assumed here. Phase 03 runs `llama-bench` and the real number is recorded in the engineering log. If it lands in low single digits the model is a batch tool, not a conversational one, and the field workflow is written accordingly.
+Qwen2.5-0.5B-Instruct Q4_K_M, `-c 1024 -t 4`, on-device:
+
+```
+> Say hello in five words.
+Hello!
+[ Prompt: 6.1 t/s | Generation: 0.6 t/s ]
+```
+
+**0.6 tokens/second generation. 6.1 t/s prompt processing.**
+
+That is roughly **1.7 seconds per generated token**. A 30-token reply takes about
+50 seconds; a 200-token reply takes over five minutes. Prompt processing is ten
+times faster than generation, so reading input is cheap and producing output is
+the wall.
+
+This is below the low-single-digits the ADR anticipated, and it settles the
+question decisively: **the on-device model is not a conversational tool.** It is
+usable only where the output is genuinely tiny — a rewritten sentence, a
+handful of words, a yes/no classification. Anything longer is faster to write by
+hand.
+
+The ADR's guidance stands, sharpened: the model is a last-resort utility for
+when there is no network, not a feature anyone should plan a workflow around.
 
 ## Consequences
 

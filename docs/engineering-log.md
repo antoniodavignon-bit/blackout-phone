@@ -4,6 +4,86 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-08 — Phase 03: it runs, at 0.6 tokens per second
+
+A language model is running on the flip phone, offline.
+
+```
+$ llama-cli -m ~/models/qwen2.5-0.5b-instruct-q4_k_m.gguf -c 1024 -t 4 \
+    --no-display-prompt -p "Say hello in five words."
+
+build : b10867-f3f1a8f27
+model : qwen2.5-0.5b-instruct-q4_k_m.gguf
+ftype : Q4_K - Medium
+
+> Say hello in five words.
+Hello!
+
+[ Prompt: 6.1 t/s | Generation: 0.6 t/s ]
+```
+
+**0.6 tokens/second generation, 6.1 t/s prompt.** No published figure for
+llama.cpp on a Snapdragon 215 existed to compare against, which is why
+[ADR-002](decisions/ADR-002-model-ceiling.md) shipped with the number blank
+rather than estimated. Now it is measured.
+
+**What 0.6 t/s actually means.** About 1.7 seconds per token. A 30-token reply
+takes ~50 seconds. A 200-token reply takes over five minutes. Prompt processing
+runs ten times faster than generation, so reading is cheap and writing is the
+wall.
+
+That is slower than the low-single-digits ADR-002 anticipated, and it changes
+the honest description of this capability. **The on-device model is not a
+conversational tool and should not be described as one.** It is usable where the
+output is genuinely tiny — one rewritten sentence, a few words, a yes/no
+classification. Past that it is faster to write by hand. The Kiwix library, not
+the model, is what makes this device useful offline.
+
+Recording the disappointing number is the point. A repo that claimed
+"on-device AI" without it would be marketing.
+
+### Getting there took two source patches
+
+**1. `vcvtnq_s32_f32` redefinition.** llama.cpp defines a scalar fallback for
+this intrinsic on 32-bit ARM; clang 21 now provides it natively. Redefinition
+error, build dead at 5%. Patched locally by `#if 0`-ing llama.cpp's version and
+letting clang's win — which is also faster, being the real instruction rather
+than four `roundf` calls.
+
+**2. The test suite does not compile on 32-bit.** `tests/test-opt.cpp:101`
+narrows `int64_t` to `size_t` in an initializer list. Fine where `size_t` is 64
+bits; a hard C++11 error where it is 32. Not patched — the fix is to stop
+building tests:
+
+```
+cmake --build build --config Release -j 2 --target llama-cli llama-bench
+```
+
+**That target line is the useful takeaway for anyone repeating this.** `--target
+all` cannot succeed on armv7l against current llama.cpp. Building only what you
+need sidesteps the entire test-suite problem and is much faster besides.
+
+Both failures share one root cause: **this device runs a 32-bit armv7l
+userspace on 64-bit ARMv8-A silicon**, because Android Go ships that way.
+`hardware.md` said arm64 until `uname -m` said otherwise — taken from the
+chipset spec rather than the device, and wrong for a plausible-sounding reason.
+Corrected. Almost nobody compiles llama.cpp on 32-bit ARM in 2026, so these
+paths sit unexercised upstream.
+
+### Still open
+
+`llama-bench` was not among the built targets, so these figures come from
+`llama-cli`'s own reporting on a real prompt rather than a synthetic benchmark.
+Arguably the more honest number, but not directly comparable to published
+`llama-bench` results elsewhere.
+
+Untested optimizations, in the order worth trying: fewer threads (`-t 2` — four
+A53 cores may be memory-bandwidth bound rather than compute bound), a smaller
+model (a ~270M parameter GGUF should roughly double throughput), and confirming
+NEON is actually enabled in this 32-bit build rather than assumed.
+
+---
+
 ## 2026-09-08 — The SD card is writable, and that changes the storage plan
 
 [ADR-003](decisions/ADR-003-storage-split.md) was written from the documented Termux limitation: `termux-setup-storage` never requests SD-specific permission, so writes to the card fail. **On this device that is not true**, and measuring it beat assuming it.

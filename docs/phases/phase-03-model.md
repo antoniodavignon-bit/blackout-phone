@@ -1,6 +1,6 @@
 # Phase 03 — On-device model
 
-**Status:** 🔨 In progress
+**Status:** ✅ Complete · 2026-09-08 — **0.6 tok/s generation**
 
 Goal: llama.cpp compiled on the device, a sub-1B GGUF loaded, and a measured throughput number.
 
@@ -23,8 +23,17 @@ Detach with **Ctrl-b** then **d**; reattach with `tmux attach -t build`.
 cd ~ && git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 cmake -B build
-cmake --build build --config Release -j 2
+cmake --build build --config Release -j 2 --target llama-cli llama-bench
 ```
+
+> **`--target llama-cli llama-bench`, never `all`.** On 32-bit ARM the test
+> suite fails to compile (`tests/test-opt.cpp` narrows `int64_t` to `size_t`),
+> which kills a full build at 74%. Building only what you need sidesteps it
+> entirely and finishes far sooner.
+
+> **You will also hit a redefinition error at ~5%:** llama.cpp's 32-bit ARM
+> fallback for `vcvtnq_s32_f32` collides with clang 21, which now provides it.
+> Wrap llama.cpp's version in `#if 0` and let clang's win.
 
 > **`-j 2`, not `-j 4`.** Each compile job can claim several hundred MB and there is roughly a gigabyte usable. Four parallel jobs risk the OOM killer taking the build near the end. Drop to `-j 1` if it still dies.
 

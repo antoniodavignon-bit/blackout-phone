@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | SoC | Qualcomm QM215 Snapdragon 215, 28 nm |
-| CPU | 4 × Cortex-A53 @ 1.3 GHz, arm64 |
+| CPU | 4 × Cortex-A53 @ 1.3 GHz — ARMv8-A silicon, **32-bit armv7l userspace** |
 | GPU | Adreno 308 |
 | RAM | 2 GB |
 | Storage | 16 GB eMMC 5.1 + dedicated microSDXC slot |
@@ -39,12 +39,14 @@ Manufacturer Bullitt Group closed January 2024. No vendor support, firmware, or 
 | Termux write to card | **Full card writable**, not just app sandbox | `echo … > /storage/0CEC-1F1B/Reference/tw.txt` |
 | Card mount options | **noexec** — `chmod +x` does not stick | Script on card → `bad interpreter: Permission denied` |
 | `~/storage/external-1` resolves to | `/storage/0CEC-1F1B/Android/data/com.termux/files` | `readlink -f` |
+| **llama.cpp generation** | **0.6 tok/s** (Qwen2.5-0.5B Q4_K_M, `-c 1024 -t 4`) | `llama-cli` on-device |
+| **llama.cpp prompt eval** | **6.1 tok/s** | same run |
+| Userspace architecture | **armv7l (32-bit)** on ARMv8-A silicon | `uname -m` / `dpkg --print-architecture` |
 
 ## Unmeasured
 
 | Question | Why it matters | Plan |
 |---|---|---|
-| llama.cpp tokens/sec | Decides whether the model is conversational or batch-only | `llama-bench` in Phase 03 |
 | USB-C OTG support | Not stated in published specs | Test with a cheap adapter |
 | GGUF `mmap` from a noexec mount | Decides whether models can live on the card | Load a model from the card once Phase 03 compiles |
 | Real-world battery under inference | Determines how many spares to carry | Measure during the 48-hour trial |
