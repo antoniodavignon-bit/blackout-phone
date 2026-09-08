@@ -1,0 +1,20 @@
+# Models and archives — large binaries, never committed
+*.gguf
+*.zim
+*.zim??
+*.apk
+*.obf
+
+# Build output
+build/
+llama.cpp/
+
+# Captured content — personal, stays on the device
+inbox/
+vault/
+*.m4a
+
+# OS noise
+.DS_Store
+Thumbs.db
+*.swp
