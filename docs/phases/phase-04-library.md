@@ -136,3 +136,101 @@ Appropedia returns results with every radio off.
 **No usable offline plant identification.** Wikispecies is taxonomy — Latin
 names and classification, not edibility. Every plant-ID app does recognition in
 the cloud. Carry a paper regional field guide.
+
+
+---
+
+# Maps — 83 US regions, 29.6 GiB
+
+Kiwix answers "what is this." OsmAnd answers "where am I." Both had to move to
+the card; only one of them was straightforward.
+
+## Move OsmAnd's data folder first
+
+Settings -> OsmAnd settings -> Data storage folder -> **External storage 2**.
+
+"External storage 1" is the 11.38 GB internal volume, which cannot hold the US.
+"External storage 2" is the card, with 99 GB free. Switching triggers a
+migration of the existing map data — let it finish completely before touching
+the card, and force-close OsmAnd and power the phone off before removing it.
+FAT32 has no journal.
+
+## The destination is not the obvious one
+
+```
+/Android/data/net.osmand.plus/files/
+```
+
+**`net.osmand.plus`**, not `net.osmand`. The suffix is the Play Store package
+identifier; the F-Droid build uses a different one. Copy into the wrong
+directory and the files sit on the card, occupying space, invisible to the app
+forever.
+
+Verify the real path on the card rather than assuming it:
+
+```bash
+ls -d /Volumes/CATSD/Android/data/*osmand*
+```
+
+## OsmAnd strips the `_2` suffix
+
+Downloaded archives are named `Us_virginia_northamerica_2.obf.zip`. What OsmAnd
+writes after installing is `Us_virginia_northamerica.obf` — the `_2` is a map
+format version marker in the download name, not part of the installed name.
+
+This was not guesswork. Virginia had already migrated to the card, and it was
+byte-identical in size to the unzipped `_2` file on the Mac, with matching
+hashes at head, middle and tail. Same file, different name.
+
+**Copy all regions with `_2` stripped** so they match how OsmAnd names its own
+downloads, and skip any region already present — otherwise the same map loads
+twice under two names.
+
+## Copy and verify
+
+```bash
+COPYFILE_DISABLE=1 cp ~/Downloads/osm/*.obf \
+  /Volumes/CATSD/Android/data/net.osmand.plus/files/
+dot_clean -m /Volumes/CATSD
+```
+
+`COPYFILE_DISABLE=1` suppresses AppleDouble sidecars. Without it macOS writes a
+`._Us_alabama_northamerica.obf` next to every map and OsmAnd sees 166 files
+instead of 83.
+
+Every file was written as `NAME.obf.part` and renamed only after its byte count
+matched the source. A killed or failed copy can never masquerade as a finished
+map — the Phase 04 verification rule applied to writes as well as downloads.
+
+## Result
+
+| | |
+|---|---|
+| Regions on card | 83 states and metro areas + `World_basemap_mini` |
+| Total | 29.57 GiB |
+| Size verification | 83/83 exact match, 0 mismatches, 0 missing |
+| Content spot-check | 7 files, head/middle/tail hashes, all matching |
+| Largest single file | `Us_north-carolina_northamerica.obf`, 1.1 GB |
+| Card remaining | 70 GB free |
+
+No file approaches the FAT32 4 GB ceiling — the largest US region is 1.1 GB, so
+maps never hit the constraint that forced curated sub-4 GB ZIM packs.
+
+## A verification that passes on nothing is not a verification
+
+The content spot-check initially reported `CONTENT-MATCH` for a New York file
+that does not exist. Both hashes were `d41d8cd98f00b204e9800998ecf8427e` — the
+MD5 of empty input. Two unreadable files hash identically and the comparison
+returns true.
+
+New York is not one region; it is five (`albany`, `buffalo`,
+`new-york-city`, `syracuse`, `utica`). The guessed filename matched nothing on
+either side, and the test reported success.
+
+Any integrity check has to assert the input was non-empty before comparing:
+
+```bash
+[ ! -s "$a" ] || [ ! -s "$b" ] && { echo "SKIP-UNREADABLE"; continue; }
+```
+
+Fourth way a library lies, and this one was the test lying, not the data.

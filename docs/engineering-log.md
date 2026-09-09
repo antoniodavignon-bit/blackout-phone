@@ -4,6 +4,44 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-09 — Maps: 83 regions, and a test that passed on nothing
+
+83 US OsmAnd regions on the card, 29.57 GiB, 83/83 verified by size and 7 by
+content hash. The device now has offline reference and offline navigation.
+
+### The destination directory was a coin flip
+
+OsmAnd's data folder on the card is `Android/data/net.osmand.plus/files/`.
+Not `net.osmand`. The package suffix depends on which build is installed, and
+guessing wrong means 83 files that occupy 29 GB and never appear in the app.
+Listing `Android/data/*osmand*` takes one second and removes the guess.
+
+### OsmAnd renames what it installs
+
+Downloads are `_2.obf`; installed maps are not. Virginia had already migrated
+to the card under the stripped name and matched the Mac's `_2` copy byte for
+byte at head, middle and tail — the naming convention proved from evidence
+already on the device rather than assumed.
+
+### The test lied before the data could
+
+A content spot-check reported `CONTENT-MATCH` on a New York file that does not
+exist under that name — New York is five separate regions. Both sides hashed
+to `d41d8cd98f00b204e9800998ecf8427e`, the MD5 of empty input.
+
+Phase 04 established that a truncated archive opens and shows a real title.
+This is the same failure one level up: a verification that runs on nothing
+reports success. Assert non-empty inputs before comparing, or the check is
+decoration.
+
+### Backlog opened
+
+`docs/backlog.md` — card imaging and integrity manifests, the missing SRTM
+contour data, adb debloat, and the open question of whether a 0.6 tok/s model
+earns its slot at all.
+
+---
+
 ## 2026-09-09 — Phase 04: 18 archives, and three ways a library can quietly lie to you
 
 The device now carries 18 GB of offline reference. Searching "water purification"
