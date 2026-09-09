@@ -4,6 +4,104 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-09 — Phase 04: 18 archives, and three ways a library can quietly lie to you
+
+The device now carries 18 GB of offline reference. Searching "water purification"
+in Appropedia returns results with the radios off. That is the capability the
+whole build exists for — not the language model.
+
+### Kiwix would not install, and it was the architecture again
+
+The mainline F-Droid package `org.kiwix.kiwixmobile` returns 404 and current
+Kiwix builds target arm64. On a 32-bit armv7l userspace the app simply reads as
+unavailable — no useful error, just absent.
+
+The IzzyOnDroid repo carries `org.kiwix.kiwixmobile.standalone` 3.14.1 built for
+**armeabi-v7a exclusively**. That installs and runs fine.
+
+**Fourth consequence of the 32-bit userspace**, after the llama.cpp intrinsic
+collision, the test suite that will not compile, and the model-size ceiling.
+When an Android app is "unavailable" on this device, check the ABI before
+anything else.
+
+### Silent truncation is the real hazard of an offline library
+
+Five ZIMs downloaded short. `mdwiki` stopped at 96 KB. `wikibooks` stopped at
+1.8 GB of 3.3. Appropedia arrived at 225,828,864 bytes against a true size of
+581,641,351 — **39% of the file**.
+
+Every one of them is a structurally valid ZIM. They open in Kiwix. They show a
+title and a description. They are simply missing most of their content, and
+nothing in the interface says so.
+
+For a device whose entire purpose is being trusted when nothing else works,
+that is the worst possible failure mode: it fails silently, and it fails at the
+moment you need it.
+
+**Verify every archive against the server before trusting it:**
+
+```
+R=$(curl -sIL "$URL" | grep -i '^content-length:' | tail -1 | awk '{print $2}' | tr -d '\r')
+L=$(stat -f%z "$f")
+[ "$L" = "$R" ] && echo OK || echo "MISMATCH $f local=$L remote=$R"
+```
+
+Appropedia would have shipped at 39% complete without that check — and it is
+the water-treatment and food-storage archive.
+
+### Root cause: the build host ran out of disk
+
+The truncations were not network failures. macOS reported
+`No space left on device`, and curl kept going, writing partial files.
+
+The build host had **118 MiB free on a 228 GB drive**. Investigating it found
+79 GB in `~/git-backup-home-20260829` — a bare git repository created when
+`git init` was run in the home directory instead of a project folder. Two
+commits, "Initial commit" and "Add all life OS files," which faithfully stored
+16 GB of Ollama model weights, 20 GB of `~/Library`, and every cache on the
+machine as git objects.
+
+Before deleting it: `ls-tree` showed it also held `Desktop/life-os/` — product
+PRD, sales copy, architecture and vision documents that existed nowhere else.
+Extracted with `git archive` first, then the blob was removed. **89 GB
+recovered.**
+
+The lesson is not about git. It is that **an offline device is only as
+trustworthy as the machine that loaded it**, and a full disk corrupts a library
+silently.
+
+### The library
+
+18 archives, 18 GB, every file under the FAT32 4 GB ceiling.
+
+| Category | Contents |
+|---|---|
+| Survival | TruePrepper 1.3 G, Appropedia 555 M, Wikibooks 3.3 G |
+| Medical | MDWiki 2.1 G, WikEM 357 M, Wikipedia Medicine 155 M |
+| Nature | Wikispecies 3.2 G |
+| Reference | Wikipedia Simple English 937 M, Top 100 318 M, World Factbook 388 M, plus Geography, Computer, History, Maths, Physics, Chemistry, Climate, Sociology |
+| Scripture | KJV plain text 4 MB, AndBible app |
+
+Topic packs come in `maxi` (with images) well under 4 GB, so the earlier
+assumption that FAT32 forced text-only archives was wrong. Only the
+whole-of-Wikipedia builds are out of reach.
+
+### Kiwix does not file anything
+
+It reads titles and descriptions from ZIM metadata and shows one flat list. No
+folders, no tags, no reordering. With 18 archives that is workable but not good.
+
+Written `Reference/CATALOG.md` as the index the app does not provide: a
+"where do I look for X" table pointing each need — water, foraging, first aid,
+navigation, scripture — at the specific archive that answers it, plus an honest
+list of what the device cannot do.
+
+**The gap worth stating plainly: there is no usable offline plant
+identification.** Wikispecies is taxonomy, not edibility, and every plant-ID app
+does recognition in the cloud. The answer is a paper field guide.
+
+---
+
 ## 2026-09-08 — Phase 03: it runs, at 0.6 tokens per second
 
 A language model is running on the flip phone, offline.

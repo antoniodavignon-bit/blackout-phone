@@ -62,7 +62,7 @@ The manufacturer, Bullitt Group, closed in January 2024. There is no vendor supp
 | [01 — Prep](docs/phases/phase-01-prep.md) | Device access, adb, microSD, debloat | ✅ Complete |
 | [02 — Termux](docs/phases/phase-02-termux.md) | F-Droid, Termux, toolchain, SSH access | ✅ Complete |
 | [03 — On-device model](docs/phases/phase-03-model.md) | llama.cpp compile, GGUF, benchmark | ✅ Complete — **0.6 tok/s** |
-| [04 — Offline library](docs/phases/phase-04-library.md) | Kiwix ZIMs, offline maps, own docs | ⏳ Planned |
+| [04 — Offline library](docs/phases/phase-04-library.md) | Kiwix ZIMs, offline maps, own docs | ✅ Complete — **18 archives, 18 GB** |
 | [05 — Capture & sync](docs/phases/phase-05-capture.md) | Field scripts, voice capture, rsync home | ⏳ Planned |
 
 Running narrative with dates and dead ends: **[docs/engineering-log.md](docs/engineering-log.md)**
@@ -83,10 +83,11 @@ Things that are true of this hardware and will not be engineered away:
 |---|---|---|
 | ~1 GB usable RAM | 2 GB total, Android 11 Go | One workload at a time. Compile with `-j 2`, not `-j 4`. |
 | **0.6 tok/s generation** | 4 × A53 @ 1.3 GHz, 28 nm, 32-bit | Model is for tiny outputs only — not conversation. |
-| 32-bit armv7l userspace | Android Go build on 64-bit silicon | llama.cpp's 32-bit ARM paths need patching; test suite doesn't compile. |
+| 32-bit armv7l userspace | Android Go build on 64-bit silicon | llama.cpp needs patching; its test suite won't compile; mainline Kiwix won't install (use the IzzyOnDroid armeabi-v7a build). |
 | Card is `noexec` | FAT32 carries no permission bits; `chmod +x` does not stick | Binaries and the build stay internal. Data — models included — can live on the card. |
 | No exFAT support | Device rejects exFAT cards outright | FAT32, and a hard 4 GB per-file ceiling. |
-| Full Wikipedia impossible | `wikipedia_en_all_mini` is 12 GB; split-ZIM support in Kiwix is unmaintained and unreliable | Curated sub-4 GB topic packs. |
+| Full Wikipedia impossible | `wikipedia_en_all_mini` is 12 GB; split-ZIM support in Kiwix is unmaintained and unreliable | Curated sub-4 GB topic packs — `maxi` variants with images do fit. |
+| Truncated downloads open silently | A partial ZIM is structurally valid and shows a normal title | Verify every archive's byte count against the server before trusting it. |
 | Slow package installs | Termux defaults to a geographically distant mirror | `termux-change-repo` → North America. |
 | 2.4 GHz Wi-Fi only | b/g/n radio | Download on the Mac, `scp`/`adb push` across. |
 | 2000 mAh battery | Small pack, hungry workloads | Removable — carry spares. |
