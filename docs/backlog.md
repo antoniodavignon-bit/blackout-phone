@@ -25,7 +25,9 @@ Once the library is final, `dd` the whole card to a `.img` on the Mac. A dead ca
 
 Buy an identical Onn 128 GB, restore the image onto it, keep it out of the device. Cheap, and it makes the build handable to someone else.
 
-### 3. Integrity manifest
+### 3. Integrity manifest — *started 2026-09-10*
+
+`scripts/mac/card-manifest.sh` now writes `MAPS.manifest` and `MAPS.sizes` on every run, with `--checksums` for the full SHA-256 pass. Sizes catch truncation and missing files today; hashes catch bit rot once the first full run is done and committed as a baseline. The ZIMs still need the same treatment.
 
 Generate `SHA256SUMS` for every file on the card. Store it **on the card and in this repo**. Then integrity is checkable offline, forever, with one Termux command.
 

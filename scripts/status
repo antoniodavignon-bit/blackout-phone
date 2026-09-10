@@ -1,14 +1,22 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # status — five-second health check. Answers "is this device sound?" offline.
+#
+# Honest by design: it reports what it can actually read, and says plainly
+# what it cannot. Android 11 blocks Termux from /storage/<card>/Android/data,
+# which is where OsmAnd keeps its maps, so the map count is a RECORD written
+# from the Mac at copy time, not a live count. A check that cannot see its
+# subject must not claim to have verified it.
 set -u
 CARD="/storage/0CEC-1F1B"
-MAPS="$CARD/Android/data/net.osmand.plus/files"
 ZIMS="$CARD/Kiwix"
 REF="$CARD/Reference"
+MANIFEST="$REF/MAPS.manifest"
 VAULT="$HOME/storage/shared/DMG"
 INBOX="$VAULT/inbox/capture.md"
+ZIM_EXPECTED=18
 
 ok()   { printf '  OK    %s\n' "$*"; }
+note() { printf '  NOTE  %s\n' "$*"; }
 warn() { printf '  WARN  %s\n' "$*"; }
 bad()  { printf '  FAIL  %s\n' "$*"; }
 
@@ -25,19 +33,22 @@ fi
 echo
 
 echo "library"
-if [ -d "$MAPS" ]; then
-  n=$(find "$MAPS" -maxdepth 1 -name '*.obf' 2>/dev/null | wc -l | tr -d ' ')
-  [ "$n" -ge 84 ] && ok "maps: $n .obf" || warn "maps: $n .obf (expected 84)"
-else
-  bad "maps directory missing"
-fi
 if [ -d "$ZIMS" ]; then
   n=$(find "$ZIMS" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l | tr -d ' ')
-  [ "$n" -ge 18 ] && ok "zims: $n" || warn "zims: $n (expected 18)"
+  if [ "$n" -ge "$ZIM_EXPECTED" ]; then ok "zims: $n"; else warn "zims: $n (expected $ZIM_EXPECTED)"; fi
 else
   bad "Kiwix directory missing"
 fi
-[ -f "$REF/CATALOG.md" ] && ok "CATALOG.md present" || warn "CATALOG.md missing"
+
+if [ -f "$MANIFEST" ]; then
+  mcount=$(awk -F'=' '/^count=/{print $2}' "$MANIFEST" 2>/dev/null)
+  mdate=$(awk -F'=' '/^written=/{print $2}' "$MANIFEST" 2>/dev/null)
+  note "maps: ${mcount:-?} recorded ${mdate:-?} — not verifiable here (Android/data is unreadable from Termux)"
+else
+  warn "no MAPS.manifest — run scripts/mac/card-manifest.sh with the card in the Mac"
+fi
+
+if [ -f "$REF/CATALOG.md" ]; then ok "CATALOG.md present"; else warn "CATALOG.md missing"; fi
 echo
 
 echo "capture"

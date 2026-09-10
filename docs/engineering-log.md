@@ -4,6 +4,51 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-10 — The phone cannot see its own maps
+
+Scripts installed and running on the device. `status` came back with
+`FAIL maps directory missing` while the card was plainly mounted — 69 GB free,
+18 ZIMs found, CATALOG.md found — and while OsmAnd itself was listing all 83
+regions without complaint.
+
+```
+$ ls /storage/0CEC-1F1B/Android/data/
+ls: cannot open directory: Permission denied
+```
+
+Android 11 special-cases `Android/data` above the unix permission bits. No app
+reads another app's directory there. ADR-003's first amendment established that
+Termux can write anywhere on the card, and that finding was correct — it just
+has an exception nobody hit until the maps landed inside one.
+
+**Fifth consequence of this device's platform**, after four from the 32-bit
+userspace. Different root cause, same discipline: check the constraint before
+believing the plan.
+
+### The fix is to stop pretending
+
+`status` no longer counts maps. It reads `MAPS.manifest` — written from the Mac
+by `scripts/mac/card-manifest.sh`, into `Reference/`, which sits outside
+`Android/` and is readable — and reports it as a record, with the reason it is
+only a record printed on the same line.
+
+A health check that appears to verify what it cannot see is the New York file
+again: a green result that means nothing. Better to print `NOTE` and the reason
+than `OK` and a lie.
+
+The manifest also opens backlog P0.3 — per-file sizes catch truncation now,
+`--checksums` catches bit rot once there is a committed baseline.
+
+### `vs` drowned in Genesis
+
+Searching `first` returned forty lines of the KJV and buried the one vault hit
+underneath. Reference files now report a match count with three sample lines,
+sorted by count, cut to 100 characters so nothing wraps on a 2.8″ screen. The
+vault still prints in full — there is never much of it, and it is the part you
+wrote.
+
+---
+
 ## 2026-09-10 — Phase 05 opens by deleting a feature
 
 The daily interface is four commands: `cap`, `vs`, `status`, `home`. All four

@@ -15,6 +15,19 @@ Install with `./install.sh` from a copy of this directory on the device.
 `ask` was removed in Phase 05. The on-device model measured 0.6 tok/s and is not
 part of the daily loop — see [ADR-002](../docs/decisions/ADR-002-model-ceiling.md).
 
+## Mac-side
+
+`mac/card-manifest.sh` runs on the Mac with the card mounted. Android 11 blocks
+Termux from reading `Android/data`, where OsmAnd keeps its maps, so the phone
+cannot count them — see [ADR-003](../docs/decisions/ADR-003-storage-split.md#second-amendment-2026-09-10--androiddata-is-not-included).
+This writes counts and per-file sizes into `Reference/`, which `status` reads
+and reports as a record rather than a live check.
+
+```bash
+./mac/card-manifest.sh              # counts and sizes
+./mac/card-manifest.sh --checksums  # plus SHA-256 of every map (slow)
+```
+
 ## Configuration
 
 `home` reads `~/.blackout.conf`, which is not committed:

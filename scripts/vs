@@ -1,9 +1,15 @@
 #!/data/data/com.termux/files/usr/bin/bash
 # vs — full-text search across the notes vault and the card's reference index.
+#
+# The vault is small and personal, so matches print in full.
+# Reference holds whole books; a common word can match thousands of lines, so
+# those are summarised per file with a sample rather than dumped.
 set -u
 CARD="/storage/0CEC-1F1B"
 VAULT="$HOME/storage/shared/DMG"
 REF="$CARD/Reference"
+VAULT_MAX=40      # lines shown from the vault
+REF_SAMPLE=3      # sample lines shown per reference file
 
 if [ $# -eq 0 ]; then
   echo "usage: vs \"search terms\"" >&2
@@ -13,22 +19,37 @@ fi
 Q="$*"
 hits=0
 
-search_in() {  # label dir
-  local label="$1" dir="$2"
-  [ -d "$dir" ] || return 0
-  local out
+# --- vault: show matches in full ---
+if [ -d "$VAULT" ]; then
   out=$(grep -rin --binary-files=without-match \
           --include='*.md' --include='*.txt' \
-          -- "$Q" "$dir" 2>/dev/null | head -40)
-  [ -n "$out" ] || return 0
-  echo "--- $label ---"
-  echo "$out" | sed "s|$dir/||"
-  echo
-  hits=$((hits + $(printf '%s\n' "$out" | wc -l)))
-}
+          -- "$Q" "$VAULT" 2>/dev/null | head -"$VAULT_MAX")
+  if [ -n "$out" ]; then
+    n=$(printf '%s\n' "$out" | wc -l | tr -d ' ')
+    echo "--- vault ($n) ---"
+    printf '%s\n' "$out" | sed "s|$VAULT/||"
+    echo
+    hits=$((hits + n))
+  fi
+fi
 
-search_in "vault" "$VAULT"
-search_in "reference" "$REF"
+# --- reference: count per file, then sample ---
+if [ -d "$REF" ]; then
+  counts=$(grep -ric --binary-files=without-match \
+             --include='*.md' --include='*.txt' \
+             -- "$Q" "$REF" 2>/dev/null | grep -v ':0$')
+  if [ -n "$counts" ]; then
+    echo "--- reference ---"
+    printf '%s\n' "$counts" | sort -t: -k2 -rn | while IFS=: read -r f c; do
+      printf '%s  (%s matches)\n' "${f#"$REF"/}" "$c"
+      grep -in --binary-files=without-match -m "$REF_SAMPLE" -- "$Q" "$f" 2>/dev/null \
+        | sed 's/^/    /' | cut -c1-100
+      [ "$c" -gt "$REF_SAMPLE" ] && printf '    … %s more\n' "$((c - REF_SAMPLE))"
+      echo
+    done
+    hits=$((hits + $(printf '%s\n' "$counts" | wc -l)))
+  fi
+fi
 
 if [ "$hits" -eq 0 ]; then
   echo "no matches for: $Q"

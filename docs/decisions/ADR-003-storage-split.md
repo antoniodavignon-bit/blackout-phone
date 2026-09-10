@@ -1,6 +1,6 @@
 # ADR-003 — Internal/SD storage split
 
-**Status:** Accepted 2026-09-08 · **Amended 2026-09-08** after measurement — see [Amendment](#amendment-2026-09-08--measured-on-hardware)
+**Status:** Accepted 2026-09-08 · **Amended 2026-09-08** after measurement · **Amended 2026-09-10** — the card-write finding has an exception, see [Second amendment](#second-amendment-2026-09-10--androiddata-is-not-included)
 
 ## Context
 
@@ -97,3 +97,51 @@ reasoning held, and now it is measured rather than assumed.
 storage, and several can sit side by side instead of swapping one in and out.
 The executable/data split is the whole rule: binaries internal, everything else
 on the card.
+
+
+---
+
+## Second amendment 2026-09-10 — `Android/data` is not included
+
+The first amendment said Termux can write anywhere on the card, and explained
+why: the directories are `drwxrwx--- root everybody` and Termux's uid is in
+`everybody`. That reasoning is correct, and it is not the whole picture.
+
+```
+$ ls /storage/0CEC-1F1B/Android/data/
+ls: cannot open directory '/storage/0CEC-1F1B/Android/data/': Permission denied
+```
+
+Android 11 special-cases `Android/data` and `Android/obb` above the unix
+permission bits. No app may read another app's directory there, whatever the
+mode says and whatever storage permissions have been granted. `MANAGE_EXTERNAL_STORAGE`
+does not lift it either.
+
+### Why this matters here
+
+Phase 04 put 83 map regions in `Android/data/net.osmand.plus/files/` — because
+that is where OsmAnd keeps them, and OsmAnd is not negotiable about it. The maps
+work perfectly: OsmAnd reads its own directory and lists all 83 regions.
+
+**But the phone can never audit them.** Anything running in Termux — `status`,
+a future integrity check, any script at all — is blind to the single largest
+body of content on the card.
+
+### Consequence
+
+The dividing line from the first amendment stands (executable internal, data on
+the card), with an addition:
+
+**Content owned by another app is verifiable only from the Mac.** The Mac mounts
+the card as an ordinary FAT32 volume with no scoped-storage layer, so it sees
+everything.
+
+`scripts/mac/card-manifest.sh` writes a record the phone can read — counts,
+byte totals and per-file sizes — into `Reference/`, which is a plain directory
+outside `Android/`. `status` reports that record and labels it as a record,
+never as a live count.
+
+This is deliberate. A health check that appears to verify something it cannot
+see is worse than one that admits the gap: it is the same failure as the Phase 04
+content check that reported a match on a file that did not exist. A check must
+either see its subject or say that it cannot.
