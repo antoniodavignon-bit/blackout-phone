@@ -1,6 +1,6 @@
 # Phase 05 — Capture, sync, and the blackout trial
 
-**Status:** 🔨 In progress
+**Status:** 🔨 In progress — build complete, trial not yet run
 
 Goal: close the loop. What goes into the device in a dead zone comes back out —
 and then prove it by living on the thing for two days.
@@ -74,8 +74,32 @@ library
   OK    CATALOG.md present
 ```
 
-`cap`, `vs` and `status` all confirmed on the device. `home` is written but not
-yet configured or run.
+`cap`, `vs` and `status` all confirmed on the device.
+
+### `home` — verified 2026-09-10
+
+```
+(antoniohome@192.168.x.x) Password:
+building file list ... done
+./
+capture.md
+
+sent 220 bytes  received 56 bytes
+total size is 103  speedup is 0.37
+synced.
+```
+
+The loop is closed: captured on the phone with no network, synced when Wi-Fi
+returned, readable on the Mac. All four commands are now proven on hardware
+rather than in a test harness.
+
+Two prompts appear on the first run and neither is an error — the host-key
+`yes`, then the **Mac account password**, not the Termux one.
+
+`MAC_PATH` is written relative to the remote home (`Documents/inbox/`) rather
+than `~/Documents/inbox/`. rsync resolves remote paths against the home
+directory already, and a literal tilde has to survive two rounds of shell
+quoting to work.
 
 ### Configure `home`
 
