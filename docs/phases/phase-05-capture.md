@@ -52,9 +52,41 @@ Records with no network. Transcribe later on the Mac, where the horsepower is.
 Requires the Termux:API app plus the `termux-api` package — the same dependency
 `status` needs for its battery reading.
 
-## Persist sshd across reboots
+## Persist sshd across reboots — verified 2026-09-10
 
-Termux:Boot, so the SSH interface survives a restart without touching the keypad.
+```bash
+mkdir -p ~/.termux/boot
+cat > ~/.termux/boot/start-sshd <<'BOOT'
+#!/data/data/com.termux/files/usr/bin/sh
+termux-wake-lock
+sshd
+BOOT
+chmod +x ~/.termux/boot/start-sshd
+```
+
+Launch the Termux:Boot app once from the app drawer — it stays disarmed until
+it has been opened at least once. Set Termux to **Unrestricted** under battery
+optimization as well; Android Go reaps background processes and would otherwise
+kill `sshd` shortly after it starts.
+
+### Verified
+
+```
+$ adb reboot
+$ adb forward tcp:8022 tcp:8022 && ssh -p 8022 u0_a195@localhost
+Connection closed by 127.0.0.1 port 8022      # still booting
+$ ssh -p 8022 u0_a195@localhost
+u0_a195@localhost's password:                 # sshd came back on its own
+```
+
+**The first attempt failing is normal and not a failure.** Termux:Boot runs on
+`BOOT_COMPLETED`, which Android 11 does not deliver until the device has been
+unlocked once after boot. Retry after unlocking before concluding anything.
+
+The `adb forward` does not survive a reboot either — it has to be re-run every
+time, which looks like a phone-side problem and is not one.
+
+This clears one of the four defined trial failures.
 
 ## The 48-hour blackout trial
 
