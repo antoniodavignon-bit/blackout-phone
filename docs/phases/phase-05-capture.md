@@ -22,13 +22,60 @@ Source lives in [`scripts/`](../../scripts/), tested before commit.
 
 ### Install
 
+From the Mac, wiping the destination first:
+
 ```bash
-cd ~/blackout-phone/scripts
-./install.sh
+adb shell rm -rf /sdcard/blackout-scripts
+adb push scripts /sdcard/blackout-scripts
 ```
 
-The card is `noexec`, so these go to `$PREFIX/bin` on internal storage. Nothing
-executable ever runs from the SD card.
+Then on the phone:
+
+```bash
+bash /sdcard/blackout-scripts/install.sh
+```
+
+`bash <path>` rather than `./install.sh` — `/sdcard` is `noexec`, but bash
+reading a file as data is unaffected. The scripts themselves install to
+`$PREFIX/bin` on internal storage, because nothing executable runs from
+external storage.
+
+> **`adb push` nests on a second run.** `adb push scripts /sdcard/blackout-scripts`
+> creates the directory the first time and copies the files into it. Run it again
+> and the destination already exists, so adb copies the *folder* inside —
+> producing `/sdcard/blackout-scripts/scripts/`. The stale files stay at the top
+> level, and `install.sh` keeps installing them.
+>
+> This cost four rounds of "the push worked, the installer ran, nothing changed."
+> Both halves were true. They were pointed at different directories.
+>
+> Wipe the destination first, or push `scripts/.` instead of `scripts`.
+> `install.sh` now warns when it sees a nested copy beside itself.
+
+### Verified on hardware 2026-09-10
+
+```
+--- vault (1) ---
+inbox/capture.md:1:- [2026-09-10 15:47] first capture on the device
+
+--- reference ---
+kjv-bible.txt  (606 matches)
+    25:The First Book of Moses: Called Genesis
+    … 603 more
+
+CATALOG.md  (3 matches)
+    20:**First aid and injuries**
+```
+
+```
+library
+  OK    zims: 18
+  WARN  no MAPS.manifest — run scripts/mac/card-manifest.sh with the card in the Mac
+  OK    CATALOG.md present
+```
+
+`cap`, `vs` and `status` all confirmed on the device. `home` is written but not
+yet configured or run.
 
 ### Configure `home`
 

@@ -4,6 +4,47 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-10 — Four rounds lost to a trailing slash that was not there
+
+`vs` and `status` were rewritten, pushed, and installed. Three times the output
+came back identical to before the fix. The push reported success. The installer
+listed four files installed. Nothing had changed.
+
+`adb push scripts /sdcard/blackout-scripts` creates the destination and fills it
+on the first run. On every run after, the destination exists, so adb copies the
+*directory* into it — `/sdcard/blackout-scripts/scripts/`. The stale files sit
+untouched at the top level, which is exactly where `install.sh` was reading from.
+
+Every individual step was succeeding and reporting honestly. The composition was
+wrong, and nothing in either message could reveal that.
+
+The tell was the count: `6 files pushed` became `7 files pushed` when
+`mac/card-manifest.sh` was added, proving the new set had crossed the cable while
+the installed behaviour stayed old. Two facts that cannot both be true unless the
+files landed somewhere nobody was looking.
+
+**Fix:** wipe the destination before pushing, or push `scripts/.` rather than
+`scripts`. `install.sh` now warns when it finds a nested copy beside itself.
+
+Third entry in this log where the failure was a report rather than a system —
+a truncated ZIM that opens with a real title, a content check that passed on a
+file that did not exist, and now two accurate messages that combine into a lie.
+Verifying a step is not the same as verifying the step did what you wanted.
+
+### And it works
+
+```
+kjv-bible.txt  (606 matches)
+    … 603 more
+CATALOG.md  (3 matches)
+    20:**First aid and injuries**
+```
+
+606 matches summarised in four lines, the vault hit on top, and the catalog
+surfacing something worth reading.
+
+---
+
 ## 2026-09-10 — The phone cannot see its own maps
 
 Scripts installed and running on the device. `status` came back with
