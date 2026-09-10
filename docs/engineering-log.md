@@ -4,6 +4,54 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-10 — The backup that was not there
+
+Before starting the 48-hour trial, a check on what a card failure would actually
+cost.
+
+```
+$ find ~/Downloads -iname '*.zim' | wc -l
+0
+```
+
+Eighteen gigabytes of curated offline reference — the reason this device exists
+— had exactly one copy, on a consumer FAT32 card with no journal, about to spend
+two days in a pocket getting power-cycled.
+
+ADR-003 has said since the day it was written that *"the Mac is the master copy
+of all library content. Card failure costs a re-copy, not data."* Every ZIM had
+been downloaded, verified, moved to the card, and deleted from the Mac. The
+sentence was an intention that got recorded as a fact, and it read as
+reassurance for two days while the opposite was true.
+
+The maps were genuinely fine — 29.6 GB of masters still in `~/Downloads/osm`.
+The GGUF was fine. The library was not.
+
+### The planned fix did not survive contact with the disk
+
+The backlog said `dd` the card. 128 GB card, 118 GB image, 56 GB free on the
+Mac. It does not fit — and compression buys nothing, because ZIMs and `.obf`
+files are already compressed. Worse, landing near-full is the exact condition
+that silently truncated five archives in Phase 04.
+
+So: file-level backup of what exists nowhere else, skipping the duplicated.
+19 GB, verified 18/18 by size and 3 by content hash at head, middle and tail,
+with the non-empty guard that the New York incident earned. Mac sits at 38 GB
+free.
+
+### Manifests written
+
+`MAPS.manifest`, `MAPS.sizes` and `ZIMS.sizes` now live in `Reference/`, which
+Termux can read. `status` on the phone reports 84 maps as a recorded fact rather
+than pretending to count what Android 11 hides from it.
+
+### The rule
+
+A backup claim is a measurement, not an intention. This one sat in an ADR for
+two days, in good faith, being false. Check it or do not write it down.
+
+---
+
 ## 2026-09-10 — Four rounds lost to a trailing slash that was not there
 
 `vs` and `status` were rewritten, pushed, and installed. Three times the output

@@ -1,6 +1,6 @@
 # ADR-003 — Internal/SD storage split
 
-**Status:** Accepted 2026-09-08 · **Amended 2026-09-08** after measurement · **Amended 2026-09-10** — the card-write finding has an exception, see [Second amendment](#second-amendment-2026-09-10--androiddata-is-not-included)
+**Status:** Accepted 2026-09-08 · **Amended 2026-09-08** after measurement · **Amended 2026-09-10** twice — see [Second amendment](#second-amendment-2026-09-10--androiddata-is-not-included) and [Third amendment](#third-amendment-2026-09-10--the-master-copy-did-not-exist)
 
 ## Context
 
@@ -145,3 +145,70 @@ This is deliberate. A health check that appears to verify something it cannot
 see is worse than one that admits the gap: it is the same failure as the Phase 04
 content check that reported a match on a file that did not exist. A check must
 either see its subject or say that it cannot.
+
+
+---
+
+## Third amendment 2026-09-10 — the master copy did not exist
+
+The original decision closed with:
+
+> The Mac is the master copy of all library content. Card failure costs a
+> re-copy, not data.
+
+That was a design intention recorded as if it were a fact. It was checked for
+the first time today:
+
+```
+$ find ~/Downloads -iname '*.zim' | wc -l
+0
+```
+
+**Zero.** Every ZIM had been downloaded on the Mac, verified, moved to the card,
+and deleted. Eighteen gigabytes of curated reference existed in exactly one
+place — a consumer FAT32 card with no journal, living in a pocket, about to be
+carried through a 48-hour field trial.
+
+The maps were fine: 29.6 GB of `.obf` masters still sat in `~/Downloads/osm`.
+The GGUF was fine, byte-identical on both. The library — the thing the whole
+build exists for — was not.
+
+### The raw image was the wrong plan
+
+The backlog called for `dd` of the whole card. Measured against the actual
+machine, that fails:
+
+| | |
+|---|---|
+| Card capacity | 128 GB → a 118 GB image |
+| Mac free space | 56 GB |
+| Compression | ZIMs and `.obf` are already compressed; near zero gain |
+
+It does not fit, and the near-miss is worse than the shortfall: a nearly-full
+Mac disk is what silently truncated five archives in Phase 04.
+
+### What was done instead
+
+File-level backup of what exists nowhere else, skipping what is already
+duplicated:
+
+```
+~/Downloads/blackout-library/
+  Kiwix/       18 ZIMs, 18.23 GiB   — verified 18/18 by size, 3 by content hash
+  Reference/   CATALOG.md, kjv-bible.txt, MAPS.manifest, MAPS.sizes, ZIMS.sizes
+```
+
+19 GB rather than 118 GB. Mac at 38 GB free afterwards. The maps were skipped
+because `~/Downloads/osm` already holds them, and the GGUF because the copies
+are byte-identical.
+
+**The ADR's claim is now true for the first time since it was written.**
+
+### The rule this establishes
+
+A backup claim is a measurement, not an intention. "The Mac is the master copy"
+was written in good faith on the day the plan was made, stayed in the document
+for two days while the opposite became true, and would have kept reading as
+reassurance right up until the card died.
+
+Check the claim, or do not write it down.

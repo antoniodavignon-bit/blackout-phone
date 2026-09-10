@@ -17,17 +17,35 @@ Phase 04 put 48 GB onto one consumer microSD card formatted FAT32. That card now
 | Silent bit rot | A corrupted ZIM opens and shows a real title, same as a truncated one did in Phase 04 |
 | Accidental overwrite | Card mounts read/write on any machine it touches |
 
-### 1. Image the card
+### 1. ~~Image the card~~ — DONE differently, 2026-09-10
 
-Once the library is final, `dd` the whole card to a `.img` on the Mac. A dead card becomes a 30-minute restore instead of a week of re-downloading and re-verifying.
+A `dd` image was the wrong instrument here and the numbers say so: a 128 GB card
+makes a 118 GB file, the Mac has 56 GB free, and ZIMs and `.obf` files are
+already-compressed formats that will not shrink. It does not fit, and getting
+close to full is what truncated five archives in Phase 04.
+
+Replaced with a file-level backup of content that exists nowhere else:
+
+```
+~/Downloads/blackout-library/
+  Kiwix/       18 ZIMs, 18.23 GiB — 18/18 verified by size, 3 by content hash
+  Reference/   CATALOG.md, kjv-bible.txt, and the three manifests
+```
+
+19 GB instead of 118. Maps skipped — `~/Downloads/osm` already holds all 83.
+GGUF skipped — byte-identical copy already on the Mac.
+
+**The finding that prompted it:** the Mac held zero ZIMs. ADR-003 had claimed
+the Mac was the master copy of all library content since the day it was written.
+See the [third amendment](decisions/ADR-003-storage-split.md#third-amendment-2026-09-10--the-master-copy-did-not-exist).
 
 ### 2. Clone to a second card
 
 Buy an identical Onn 128 GB, restore the image onto it, keep it out of the device. Cheap, and it makes the build handable to someone else.
 
-### 3. Integrity manifest — *started 2026-09-10*
+### 3. Integrity manifest — *sizes done 2026-09-10, hashes open*
 
-`scripts/mac/card-manifest.sh` now writes `MAPS.manifest` and `MAPS.sizes` on every run, with `--checksums` for the full SHA-256 pass. Sizes catch truncation and missing files today; hashes catch bit rot once the first full run is done and committed as a baseline. The ZIMs still need the same treatment.
+`scripts/mac/card-manifest.sh` now writes `MAPS.manifest` and `MAPS.sizes` on every run, with `--checksums` for the full SHA-256 pass. Sizes catch truncation and missing files today; hashes catch bit rot once the first full run is done and committed as a baseline. `MAPS.manifest`, `MAPS.sizes` and `ZIMS.sizes` are now written to `Reference/` on the card and mirrored in the Mac backup. Sizes catch truncation and missing files today. The SHA-256 baseline is still open — it needs one full run committed before it detects anything.
 
 Generate `SHA256SUMS` for every file on the card. Store it **on the card and in this repo**. Then integrity is checkable offline, forever, with one Termux command.
 
