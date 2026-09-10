@@ -1,0 +1,37 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# vs — full-text search across the notes vault and the card's reference index.
+set -u
+CARD="/storage/0CEC-1F1B"
+VAULT="$HOME/storage/shared/DMG"
+REF="$CARD/Reference"
+
+if [ $# -eq 0 ]; then
+  echo "usage: vs \"search terms\"" >&2
+  exit 2
+fi
+
+Q="$*"
+hits=0
+
+search_in() {  # label dir
+  local label="$1" dir="$2"
+  [ -d "$dir" ] || return 0
+  local out
+  out=$(grep -rin --binary-files=without-match \
+          --include='*.md' --include='*.txt' \
+          -- "$Q" "$dir" 2>/dev/null | head -40)
+  [ -n "$out" ] || return 0
+  echo "--- $label ---"
+  echo "$out" | sed "s|$dir/||"
+  echo
+  hits=$((hits + $(printf '%s\n' "$out" | wc -l)))
+}
+
+search_in "vault" "$VAULT"
+search_in "reference" "$REF"
+
+if [ "$hits" -eq 0 ]; then
+  echo "no matches for: $Q"
+  [ -d "$REF" ] || echo "(card not mounted — reference index not searched)"
+  exit 1
+fi

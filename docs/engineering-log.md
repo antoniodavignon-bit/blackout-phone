@@ -4,6 +4,43 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-10 — Phase 05 opens by deleting a feature
+
+The daily interface is four commands: `cap`, `vs`, `status`, `home`. All four
+are committed to `scripts/`, and all four were run end to end before commit —
+usage errors, hits, misses, missing config, missing card — not just
+syntax-checked.
+
+### `ask` is gone
+
+Phase 03 measured 0.6 tok/s and the earlier text left the model a job anyway:
+tightening a sentence, generating variations, summarizing a paragraph. Every
+one of those emits enough tokens to take a minute or more. At 1.7 seconds per
+token there is no prompt worth writing.
+
+So the model comes out of the loop rather than getting worked around. llama.cpp
+stays compiled, the two `armv7l` patches stay documented, and the negative
+result becomes the deliverable: a Snapdragon 215 with 2 GB of RAM will not carry
+on-device generation. That is worth more written down than designed around.
+
+Four fast commands beat three fast commands and one that makes you wait.
+
+### `status` exists because the library is now worth checking
+
+48 GB across two apps and a card with no journal. `status` reads free space,
+counts maps and ZIMs against expected, reports the capture total and the
+battery, and degrades to warnings instead of crashing when the card is absent.
+Five seconds, no network, before you rely on the thing.
+
+### Trial criteria written before the trial
+
+The 48-hour scorecard is in the phase doc with the bars filled in and the
+failure conditions named in advance — battery hours, capture count, other-phone
+pickups, and a reach-fail log written in the moment. A trial with no criteria
+produces a feeling, and a phase doc cannot be written from a feeling.
+
+---
+
 ## 2026-09-09 — Maps: 83 regions, and a test that passed on nothing
 
 83 US OsmAnd regions on the card, 29.57 GiB, 83/83 verified by size and 7 by

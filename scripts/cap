@@ -1,0 +1,19 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# cap — timestamp a note into the capture inbox. No network, no triage.
+set -u
+INBOX="$HOME/storage/shared/DMG/inbox"
+FILE="$INBOX/capture.md"
+
+if [ $# -eq 0 ]; then
+  echo "usage: cap \"the thought\"" >&2
+  exit 2
+fi
+
+mkdir -p "$INBOX" || { echo "cap: cannot create $INBOX" >&2; exit 1; }
+
+if printf -- '- [%s] %s\n' "$(date '+%Y-%m-%d %H:%M')" "$*" >> "$FILE"; then
+  echo "captured -> $(wc -l < "$FILE" | tr -d ' ') total"
+else
+  echo "cap: write failed" >&2
+  exit 1
+fi

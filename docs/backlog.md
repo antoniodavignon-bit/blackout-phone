@@ -107,7 +107,15 @@ Contents: card restore procedure, storage paths, installed package list, the two
 
 ---
 
-## P4 — Resolve the model question honestly
+## ~~P4 — Resolve the model question honestly~~ — CLOSED 2026-09-10
+
+**Resolved: cut.** `ask` is out of the daily loop; llama.cpp and its two
+`armv7l` patches stay documented as a completed experiment with a negative
+result. See the [ADR-002 amendment](decisions/ADR-002-model-ceiling.md#amendment-2026-09-10--cut-from-the-daily-loop).
+
+<details><summary>Original entry</summary>
+
+### P4 — Resolve the model question honestly
 
 Phase 03 measured 0.6 tok/s. That is not a conversational assistant and no amount of tuning changes the order of magnitude.
 
@@ -117,6 +125,8 @@ Two options, and the phase doc should commit to one:
 2. **Cut it.** Reclaim the internal storage and the ~1 GB of RAM headroom, and record in ADR-002 that the hardware will not carry on-device generation.
 
 An honest negative result is a better phase outcome than a documented feature that nobody would use twice.
+
+</details>
 
 ---
 

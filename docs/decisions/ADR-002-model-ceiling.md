@@ -1,6 +1,6 @@
 # ADR-002 — Sub-1B model ceiling
 
-**Status:** Accepted 2026-09-07 · **Throughput measured 2026-09-08**
+**Status:** Accepted 2026-09-07 · **Throughput measured 2026-09-08** · **Cut from the daily loop 2026-09-10** — see [Amendment](#amendment-2026-09-10--cut-from-the-daily-loop)
 
 ## Context
 
@@ -61,3 +61,35 @@ rounding error.
 - The model handles bounded, mechanical text work: tightening a sentence, generating variations, summarizing a paragraph.
 - It is not a reference source. Factual lookup goes to the Kiwix library; navigation goes to offline maps.
 - Compilation must respect the same ceiling — `-j 2` rather than `-j 4`, since parallel compile jobs each claim hundreds of MB.
+
+
+---
+
+## Amendment 2026-09-10 — cut from the daily loop
+
+The measured number did not change. What changed is the willingness to keep
+building around it.
+
+0.6 tok/s means roughly 1.7 seconds per generated token. Every task the earlier
+text left open to the model — tightening a sentence, generating variations,
+summarizing a paragraph — produces enough tokens to take a minute or more, and
+is faster to do by hand or to leave for the Mac.
+
+**`ask` is removed from `$PREFIX/bin` and from the Phase 05 field loop.** The
+daily interface is `cap`, `vs`, `status`, `home` — four commands that run at
+full speed with every radio off.
+
+### What stays
+
+llama.cpp stays compiled on the device, and the two `armv7l` source patches stay
+documented. The build is a completed experiment with a real result, and the
+result is the deliverable: **a Snapdragon 215 with 2 GB of RAM will not carry
+on-device text generation.** That is worth more written down than worked around.
+
+The model file stays on the card. It costs nothing there and re-testing it after
+any toolchain change is one command.
+
+### What this closes
+
+Backlog P4. The question was whether to narrow the model's job or cut it; the
+answer is cut, and an honest negative result is the phase outcome.

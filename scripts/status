@@ -1,0 +1,58 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# status — five-second health check. Answers "is this device sound?" offline.
+set -u
+CARD="/storage/0CEC-1F1B"
+MAPS="$CARD/Android/data/net.osmand.plus/files"
+ZIMS="$CARD/Kiwix"
+REF="$CARD/Reference"
+VAULT="$HOME/storage/shared/DMG"
+INBOX="$VAULT/inbox/capture.md"
+
+ok()   { printf '  OK    %s\n' "$*"; }
+warn() { printf '  WARN  %s\n' "$*"; }
+bad()  { printf '  FAIL  %s\n' "$*"; }
+
+echo "blackout status — $(date '+%Y-%m-%d %H:%M')"
+echo
+
+echo "storage"
+printf '  internal free : %s\n' "$(df -h "$HOME" 2>/dev/null | awk 'NR==2{print $4}')"
+if [ -d "$CARD" ]; then
+  printf '  card free     : %s\n' "$(df -h "$CARD" 2>/dev/null | awk 'NR==2{print $4}')"
+else
+  bad "card not mounted at $CARD"
+fi
+echo
+
+echo "library"
+if [ -d "$MAPS" ]; then
+  n=$(find "$MAPS" -maxdepth 1 -name '*.obf' 2>/dev/null | wc -l | tr -d ' ')
+  [ "$n" -ge 84 ] && ok "maps: $n .obf" || warn "maps: $n .obf (expected 84)"
+else
+  bad "maps directory missing"
+fi
+if [ -d "$ZIMS" ]; then
+  n=$(find "$ZIMS" -maxdepth 1 -name '*.zim' 2>/dev/null | wc -l | tr -d ' ')
+  [ "$n" -ge 18 ] && ok "zims: $n" || warn "zims: $n (expected 18)"
+else
+  bad "Kiwix directory missing"
+fi
+[ -f "$REF/CATALOG.md" ] && ok "CATALOG.md present" || warn "CATALOG.md missing"
+echo
+
+echo "capture"
+if [ -f "$INBOX" ]; then
+  ok "$(wc -l < "$INBOX" | tr -d ' ') notes, last $(date -r "$INBOX" '+%Y-%m-%d %H:%M' 2>/dev/null || echo '?')"
+else
+  warn "no captures yet"
+fi
+echo
+
+echo "power"
+if command -v termux-battery-status >/dev/null 2>&1; then
+  termux-battery-status 2>/dev/null \
+    | tr -d '",{}' \
+    | awk -F: '/percentage|status/ {gsub(/^[ \t]+/,"",$1); gsub(/^[ \t]+/,"",$2); printf "  %-13s: %s\n", $1, $2}'
+else
+  warn "termux-api not installed — no battery reading"
+fi

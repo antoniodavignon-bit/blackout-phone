@@ -1,0 +1,29 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# home — push the capture inbox to the Mac when a network returns.
+# Reads MAC_HOST from ~/.blackout.conf so no address is committed to the repo.
+#   MAC_HOST="user@192.168.1.50"
+#   MAC_PATH="~/Documents/inbox/"
+set -u
+CONF="$HOME/.blackout.conf"
+INBOX="$HOME/storage/shared/DMG/inbox/"
+
+if [ ! -f "$CONF" ]; then
+  echo "home: no $CONF" >&2
+  echo 'create it with:  MAC_HOST="user@192.168.1.50"' >&2
+  echo '                 MAC_PATH="~/Documents/inbox/"' >&2
+  exit 2
+fi
+# shellcheck disable=SC1090
+. "$CONF"
+: "${MAC_HOST:?home: MAC_HOST not set in $CONF}"
+: "${MAC_PATH:=~/Documents/inbox/}"
+
+[ -d "$INBOX" ] || { echo "home: nothing to sync — $INBOX does not exist" >&2; exit 1; }
+
+echo "syncing $INBOX -> $MAC_HOST:$MAC_PATH"
+if rsync -avz --partial "$INBOX" "$MAC_HOST:$MAC_PATH"; then
+  echo "synced."
+else
+  echo "home: rsync failed — check Wi-Fi and that the Mac is reachable" >&2
+  exit 1
+fi
