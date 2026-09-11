@@ -4,6 +4,70 @@ Newest first. Written as the build happens, including the parts that did not wor
 
 ---
 
+## 2026-09-11 — The library is fine; the door is broken
+
+Tested whether the offline library could answer questions in plain words.
+Measured against the real chemistry ZIM pulled off the card in 20 MB pieces
+and MD5-verified after reassembly.
+
+### Three findings, in order of how much they changed the plan
+
+**The ZIMs already carry a full-text index.** `has_fulltext_index: True`.
+Xapian, inside the archive, answering in 1-12 ms. There was never a search
+index to build — it has been on the card since Phase 04.
+
+**Generating answers over the library is impossible, not merely slow.** Plain
+text comes out at 5.68x the ZIM size: the 18 GiB library is ~104 GB of text
+across more than a million articles. At five seconds of generation apiece
+that is 58 days. 104 GB also fits neither the card nor the Mac.
+
+**Then the finding that mattered.** The index is excellent, and unusable:
+
+```
+"how do I make drinking water safe" -> PFAS timeline, Bleach, Lead abatement
+"water chlorination"                -> Water chlorination, Shock chlorination
+```
+
+Same intent. One works. Lexical search demands you already know the term,
+which is exactly what you do not have in an emergency.
+
+### So the model translates instead of answering
+
+Build the door, not the building. On the Mac, once: rewrite a plain question
+into expert vocabulary, let the ZIM's own index retrieve the article, write
+three sentences from that article's text. Ship the table.
+
+Bounded by questions asked — thousands — rather than articles stored —
+millions. Measured at 4,915 bytes per question, so 20,000 questions is 98 MB
+against 70 GB free. The phone runs no model. Lookup is 0.2 ms.
+
+Prompt processing at 6.1 tok/s is not an obstacle to route around. It is the
+number that says inference belongs on the other machine.
+
+### And the test caught my own bug
+
+The first `ask` reduced a question to FTS terms with `paste -sd' OR '`. That
+produced:
+
+```
+how makeOdrinkingRwater safe
+```
+
+`paste -d` takes a *list of cycling delimiters*, not a string — space, O, R,
+space. It would have degraded search quietly rather than failing, on a
+command meant for emergencies. Caught because the output was printed and read
+rather than assumed to work.
+
+### Still unproven
+
+`sqlite3` with FTS5 on armv7l Termux — the fifth ABI coin-flip, and `ask`'s
+only dependency. And the real question: whether a generated bank actually
+beats well-phrased Kiwix search. Twenty questions, both ways, then decide.
+If the bank loses, the answer is a printed vocabulary card, and that write-up
+is worth the same as the other one.
+
+---
+
 ## 2026-09-10 — The backup that was not there
 
 Before starting the 48-hour trial, a check on what a card failure would actually

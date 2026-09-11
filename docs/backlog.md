@@ -1,5 +1,10 @@
 # Backlog
 
+> Phase 06 is designed and measured — see
+> [phase-06-answers.md](phases/phase-06-answers.md). Its two open gates are
+> `sqlite3`/FTS5 on armv7l, and whether a generated answer bank beats
+> well-phrased Kiwix search.
+
 Work identified but not yet scheduled into a phase. Ordered by what would hurt most if it went unaddressed.
 
 Nothing in this file is verified on the hardware yet. Everything in the phase docs was measured; everything here is a plan. The distinction matters — see [Unverified assumptions](#unverified-assumptions) at the bottom.

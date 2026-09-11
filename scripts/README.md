@@ -9,11 +9,17 @@ Internal storage only — the card is `noexec` (see [ADR-003](../docs/decisions/
 | `vs "…"` | Full-text search across the notes vault and the card's reference index. |
 | `status` | Five-second health check — storage, library counts, captures, battery. |
 | `home` | rsync the inbox to the Mac when a network returns. |
+| `ask "…"` | Answer a question from the library. Reads a pre-built bank — no model runs on the device. |
 
 Install with `./install.sh` from a copy of this directory on the device.
 
-`ask` was removed in Phase 05. The on-device model measured 0.6 tok/s and is not
-part of the daily loop — see [ADR-002](../docs/decisions/ADR-002-model-ceiling.md).
+`ask` was removed in Phase 05 and returns in Phase 06 as something different.
+It ran a 0.6 tok/s model; it now reads a bank of answers generated on the Mac
+at build time. No inference happens on the phone. See
+[ADR-002](../docs/decisions/ADR-002-model-ceiling.md) and
+[Phase 06](../docs/phases/phase-06-answers.md).
+
+`mac/build-answerbank.py` builds that bank. `mac/questions.txt` seeds it.
 
 ## Mac-side
 

@@ -1,0 +1,48 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# ask — answer a question from the offline library. No model runs here.
+#
+# Phase 03 measured 6.1 tok/s prompt processing on this device: a RAG prompt
+# takes minutes just to read. So the reasoning happened on the Mac at build
+# time and this reads the result. See docs/phases/phase-06-answers.md.
+#
+# Every answer carries the article it came from. Open that in Kiwix for the
+# full text — this is a signpost, not a substitute for the source.
+set -u
+CARD="/storage/0CEC-1F1B"
+BANK="$CARD/Reference/answerbank.sqlite"
+
+if [ $# -eq 0 ]; then
+  echo "usage: ask \"how do I make drinking water safe\"" >&2
+  exit 2
+fi
+command -v sqlite3 >/dev/null 2>&1 || { echo "ask: sqlite3 missing — pkg install sqlite" >&2; exit 1; }
+[ -f "$BANK" ] || { echo "ask: no answer bank at $BANK" >&2
+                    echo "     build it on the Mac: scripts/mac/build-answerbank.py" >&2; exit 1; }
+
+Q="$*"
+# FTS5 MATCH with bare punctuation is a syntax error, so reduce to OR'd words
+# NB: paste -d takes a LIST of cycling delimiters, not a string. `paste -sd' OR '`
+# silently joins with space,O,R,space and produces "how makeOdrinkingRwater safe".
+# Join on a single char, then substitute.
+TERMS=$(printf '%s' "$Q" | tr -cs '[:alnum:]' ' ' \
+        | tr 'A-Z' 'a-z' | tr ' ' '\n' | awk 'length>2' \
+        | paste -sd'|' - | sed 's/|/ OR /g')
+[ -n "$TERMS" ] && [ "$TERMS" != "OR" ] || { echo "ask: nothing searchable in that" >&2; exit 2; }
+
+OUT=$(sqlite3 -separator '|' "$BANK" \
+  "SELECT answer, article, expert_query FROM qa WHERE qa MATCH '$TERMS' ORDER BY rank LIMIT 1;" 2>/dev/null)
+
+if [ -n "$OUT" ]; then
+  printf '%s\n' "$OUT" | awk -F'|' '{
+    print $1
+    print ""
+    print "  source : " $2
+    print "  look up: " $3
+  }'
+else
+  echo "no answer on file for that."
+  echo
+  echo "Search Kiwix directly. The index wants technical vocabulary, not"
+  echo "plain questions — \"water chlorination\" finds what \"how do I make"
+  echo "drinking water safe\" does not."
+fi

@@ -1,0 +1,46 @@
+# Seed questions for build-answerbank.py — one per line, plain words.
+# Write them the way you would actually ask under pressure, not the way an
+# encyclopedia indexes them. Translating between the two is the model's job.
+
+# --- water ---
+how do I make drinking water safe
+can I drink rainwater
+how do I filter muddy water
+how long can I store water before it goes bad
+what does boiling water actually kill
+
+# --- fire and fuel ---
+how do I store fuel safely
+how long does gasoline last
+is it safe to burn plastic
+what burns hot enough to boil water fast
+how do I start a fire when everything is wet
+
+# --- medical ---
+what can I use to disinfect a wound
+how do I stop heavy bleeding
+what are the signs of dehydration
+how do I treat a burn
+what does heat stroke look like
+how do I know if a wound is infected
+
+# --- food ---
+how do I tell if food has gone bad
+how long does canned food really last
+how do I preserve meat without a fridge
+what happens if I eat spoiled food
+
+# --- shelter and cold ---
+how do I stay warm without heat
+what are the signs of hypothermia
+how do I keep a room warm with one candle
+
+# --- power and tools ---
+how do I make soap
+how do I charge a phone with no power
+how do I purify alcohol
+what tools matter most with no electricity
+
+# --- navigation ---
+how do I find north without a compass
+how do I estimate distance on foot
